@@ -5,6 +5,10 @@
   shell: id -u -n
   register: user
 
+- name: Ensures swapoff
+  command: swapoff -a
+  become: true
+
 - name: Pull initial images
   shell: kubeadm config images pull
 
