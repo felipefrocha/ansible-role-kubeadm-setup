@@ -82,10 +82,10 @@
     token:  "{{ K8S_TOKEN.stdout }}"
     hash:   "{{ K8S_MASTER_CA_HASH.stdout }}"
 
-- name:
+- name: Master Debug key
   debug:
     msg: "[Master] K8S_TOKEN_HOLDER K8S token is {{ hostvars['K8S_TOKEN_HOLDER']['token'] }}"
 
-- name:
+- name: Master Debug token
   debug:
     msg: "[Master] K8S_TOKEN_HOLDER K8S Hash is  {{ hostvars['K8S_TOKEN_HOLDER']['hash'] }}"
