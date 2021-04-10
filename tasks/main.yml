@@ -1,0 +1,60 @@
+---
+# tasks file for kubeadm_setup
+
+- name: Register user
+  shell: id -u -n
+  register: user
+
+- name: Pull initial images
+  shell: kubeadm config images pull
+
+  # if necessary use --pod-network-cidr for define CIDR block
+- name: Cluster initialize
+  shell: "kubeadmin init --control-plane-endpoint={{ lb_endpont }} --cri-socket={{ cri_socket }} --pod-network-cidr={{ cidr_block }}"
+  register: result
+  until: result.stdout.find("Your Kubernetes master has initialized successfully!") != -1
+  retries: 1
+  delay: 30
+
+- name: Create .kube directory
+  become_user: "{{ user.stdout }}"
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+
+- name: Check admin.conf file exists.
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: k8s_conf
+
+- name: Check config.yaml file exists.
+  stat:
+    path: /var/lib/kubelet/config.yaml
+  register: kubelet_conf
+
+- name: Copy admin.conf to {{ user.stdout }} kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ user.stdout }}/.kube/config"
+    remote_src: yes
+    owner: "{{ user.stdout }}"
+  when: k8s_conf.stat.exists
+
+- name: Cat config
+  shell: cat /etc/kubernetes/admin.conf
+  register: config
+
+- name: Kubectl Config
+  local_action: 
+    module: copy 
+    content: "{{ config.stdout }}"
+    dest: ~/.kube/config
+
+- name: Install Pod network
+  become: yes
+  become_user: " {{user.stdout }}"
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml >> pod_network_setup.txt
+  args:
+    chdir: $HOME
+    creates: pod_network_setup.txt
