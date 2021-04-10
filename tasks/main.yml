@@ -10,7 +10,7 @@
   become: yes
 
 - name: Ensures Systemctl
-  command: sudo sysctl --system
+  command: sysctl --system
   become: yes
 
 - name: Pull initial images
