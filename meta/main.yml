@@ -1,5 +1,5 @@
 galaxy_info:
-  role_name: microk8s_install
+  role_name: kubeadm_setup
   author: Felipe Rocha
   description: Install and preconfigure kubeadm
   company: Raipe Systems
