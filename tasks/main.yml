@@ -30,7 +30,6 @@
   shell: "kubeadm init --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} "
   register: kubeadmin_init
   until: kubeadmin_init.stdout.find("Your Kubernetes master has initialized successfully!") != -1
-  retries: 1
   delay: 600
 
 - name: Create .kube directory
