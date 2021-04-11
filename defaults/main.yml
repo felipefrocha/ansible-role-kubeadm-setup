@@ -1,5 +1,5 @@
 ---
 # defaults file for kubeadm_setup
 k8s:
-  lb_endpont: 192.168.15.50:6433
+  lb_endpont: 192.168.15.50:6443
   cri_socket: /run/containerd/containerd.sock
