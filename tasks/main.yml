@@ -4,6 +4,7 @@
 - name: Register user
   shell: id -u -n
   register: user
+  become: no
 
 - name: Reboot host and wait for it to restart
   reboot:
@@ -17,40 +18,59 @@
 - name: Ensures swapoff
   command: swapoff -a
   become: yes
+  changed_when: False
 
 - name: Ensures Systemctl
   command: sysctl --system
   become: yes
+  changed_when: False
 
 - name: Pull initial images
   shell: kubeadm config images pull
+  changed_when: False
+  
+- block:
+    - name: Check if cluster is created
+      ansible.builtin.file:
+        path: /etc/kubernetes/manifests/kube-apiserver.yaml
+        state: file
+  rescue:
+    # if necessary use --pod-network-cidr for define CIDR block --pod-network-cidr={{ cidr_block }}
+    - name: Cluster initialize
+      shell: "kubeadm init --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} "
+      register: kubeadmin_init
+      delay: 600
 
-# if necessary use --pod-network-cidr for define CIDR block --pod-network-cidr={{ cidr_block }}
-- name: Cluster initialize
-  shell: "kubeadm init --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} "
-  register: kubeadmin_init
-  delay: 600
+    - name: Init Cluster
+      debug:
+        msg: "{{ kubeadmin_init.stdout }}"
+  always:
+    - name: Check admin.conf file exists.
+      stat:
+        path: /etc/kubernetes/admin.conf
+      register: k8s_conf
 
-- name: Init Cluster
-  debug:
-    msg: "{{ kubeadmin_init.stdout }}"
+    - name: Check config.yaml file exists.
+      stat:
+        path: /var/lib/kubelet/config.yaml
+      register: kubelet_conf
 
 - name: Create .kube directory
-  become_user: "{{ user.stdout }}"
   file:
-    path: $HOME/.kube
+    path: ~/.kube
     state: directory
-    mode: 0755
+  become_user: "{{ user.stdout }}"
+  
+- name: Ensure .kube directory exists.
+  file:
+    path: /root/.kube
+    state: directory
 
-- name: Check admin.conf file exists.
-  stat:
-    path: /etc/kubernetes/admin.conf
-  register: k8s_conf
-
-- name: Check config.yaml file exists.
-  stat:
-    path: /var/lib/kubelet/config.yaml
-  register: kubelet_conf
+- name: Symlink the kubectl admin.conf to ~/.kube/conf.
+  file:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    state: link
 
 - name: Copy admin.conf to {{ user.stdout }} kube config
   copy:
@@ -64,20 +84,35 @@
   shell: cat /etc/kubernetes/admin.conf
   register: config
 
-- name: Kubectl Config
-  local_action: 
-    module: copy 
-    content: "{{ config.stdout }}"
-    dest: ~/.kube/config
+
+- block:
+  - name: Ensure directory Kubectl Config
+    local_action:
+      module: file
+      path: $HOME/.kube
+      state: directory
+      mode: 0755
+    become: no
+  - name: Create Kubectl Config
+    local_action: 
+      module: copy 
+      content: "{{ config.stdout }}"
+      dest: ~/.kube/config
+    become: no
+
+- name: Kubectl version
+  shell: kubectl version | base64 | tr -d '\n'
+  register: kctl_version
+
+- name: Get Pod Networks Configuration
+  get_url:
+    url: "https://cloud.weave.works/k8s/net?k8s-version={{ kctl_version.stdout }}"
+    dest: /tmp/weave.yml
 
 - name: Install Pod network
-  become: yes
-  become_user: " {{user.stdout }}"
-  shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" >> pod_network_setup.txt
-  args:
-    chdir: $HOME
-    creates: pod_network_setup.txt
-  
+  shell: kubectl apply -f /tmp/weave.yml
+  register: pod_network
+
 
 - name: Cluster token - get and store
   shell: kubeadm token list | cut -d ' ' -f1 | sed -n '2p'
