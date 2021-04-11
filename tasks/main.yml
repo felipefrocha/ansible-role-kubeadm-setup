@@ -25,12 +25,9 @@
 - name: Pull initial images
   shell: kubeadm config images pull
 
-  # if necessary use --pod-network-cidr for define CIDR block --pod-network-cidr={{ cidr_block }}
 - name: Cluster initialize
-  shell: "kubeadm init --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} "
+  shell: "kubeadm init --control-plane-endpoint {{ k8s.lb_endpont }}"
   register: kubeadmin_init
-  # until: kubeadmin_init.stdout.find("Your Kubernetes master has initialized successfully!") != -1
-  delay: 600
 
 - name: Init Cluster
   debug:
