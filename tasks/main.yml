@@ -110,7 +110,7 @@
     dest: /tmp/weave.yml
 
 - name: Install Pod network
-  shell: kubectl apply -f /tmp/weave.yml
+  command: kubectl apply -f /tmp/weave.yml
   register: pod_network
 
 
