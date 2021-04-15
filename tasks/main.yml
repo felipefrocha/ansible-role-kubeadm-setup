@@ -37,7 +37,7 @@
   rescue:
     # if necessary use --pod-network-cidr for define CIDR block --pod-network-cidr={{ cidr_block }}
     - name: Cluster initialize
-      shell: "kubeadm init --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} --upload-certs"
+      shell: "kubeadm init --apiserver-advertise-address=192.168.15.71 --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} --upload-certs"
       register: kubeadmin_init
       delay: 600
 
