@@ -146,4 +146,3 @@
     - name: Master Debug token
       debug:
         msg: "[Master] K8S_TOKEN_HOLDER K8S Hash is  {{ hostvars['K8S_TOKEN_HOLDER']['hash'] }}"
-  changed_when: False
