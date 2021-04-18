@@ -37,7 +37,7 @@
   rescue:
     # if necessary use --pod-network-cidr for define CIDR block --pod-network-cidr={{ cidr_block }}
     - name: Cluster initialize
-      shell: "kubeadm init --apiserver-advertise-address=192.168.15.71 --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} --upload-certs"
+      shell: "kubeadm init --control-plane-endpoint={{ k8s.lb_endpont }} --cri-socket={{ k8s.cri_socket }} --upload-certs"
       register: kubeadmin_init
       delay: 600
 
@@ -144,3 +144,7 @@
     - name: Master Debug token
       debug:
         msg: "[Master] K8S_TOKEN_HOLDER K8S Hash is  {{ hostvars['K8S_TOKEN_HOLDER']['hash'] }}"
+    
+    - name: Master Debug CK
+      debug:
+        msg: "[Master] K8S_TOKEN_HOLDER K8S Hash is  {{ hostvars['K8S_TOKEN_HOLDER']['certkey'] }}"
