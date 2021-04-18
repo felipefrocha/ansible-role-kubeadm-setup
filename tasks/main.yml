@@ -137,7 +137,7 @@
         token:  "{{ K8S_TOKEN.stdout }}"
         hash:   "{{ K8S_MASTER_CA_HASH.stdout }}"
         certkey:  "{{ K8S_MASTER_CERTIFICATE_KEY.stdout }}"
-        cmd: "{{ kubeadmin_init.stdout |  regex_search("kubeadm join .*certificate-key", multiline=True}}"
+        cmd: "{{ kubeadmin_init.stdout |  regex_search('kubeadm join .*certificate-key', multiline=True) }}"
   always:
     - name: Master Debug key
       debug:
