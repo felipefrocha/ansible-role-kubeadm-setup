@@ -41,13 +41,6 @@
       register: kubeadmin_init
       delay: 600
     
-    - name: Wait cluster ready
-      shell: kubectl get no --output custom-columns=STATUS:.status.conditions[*].type | grep NotReady
-      retries: 5
-      delay: 60
-      register: result
-      until: result.rc == 0
-
     - name: Init Cluster
       debug:
         msg: "{{ kubeadmin_init.stdout }}"
@@ -161,3 +154,10 @@
     - name: Master Debug command
       debug:
         msg: "[Master] K8S_TOKEN_HOLDER K8S Hash is  {{ hostvars['K8S_TOKEN_HOLDER']['cmd'] }}"
+
+    - name: Wait cluster ready
+      shell: (kubectl get no --output custom-columns=STATUS:.status.conditions[*].type | grep NotReady && exit 0) || exit 1
+      retries: 5
+      delay: 60
+      register: result
+      until: result.rc == 0
